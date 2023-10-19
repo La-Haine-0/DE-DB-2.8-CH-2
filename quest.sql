@@ -3,33 +3,48 @@
 SELECT
     category,
     order_date,
-    revenue,
-    SUM(revenue) OVER (PARTITION BY category ORDER BY order_date) AS cumulative_revenue
+    sum(revenue) OVER (PARTITION BY category ORDER BY order_date) as cumulative_revenue
 FROM sales
+ORDER BY category, order_date;
 
 --Расчет среднего чека:
 --Для каждой категории товаров на каждый день вычислите средний чек, который равен кумулятивной выручке на этот день, поделенной на кумулятивное количество заказов на этот день.
-SELECT
+SELECT 
     category,
     order_date,
-    revenue,
-    COUNT(*) OVER (PARTITION BY category ORDER BY order_date) AS cumulative_orders,
-    SUM(revenue) OVER (PARTITION BY category ORDER BY order_date) / COUNT(*) OVER (PARTITION BY category ORDER BY order_date) AS average_check
-FROM sales;
+    cumulative_revenue / cumulative_orders as average_check
+FROM 
+    (SELECT
+        category,
+        order_date,
+        sum(revenue) as cumulative_revenue,
+        sum(1) as cumulative_orders
+    FROM sales
+    GROUP BY category, order_date
+    ORDER BY category, order_date)
+ORDER BY category, order_date;
+
 
 --Определение даты максимального среднего чека:
 --Найдите дату, на которой был достигнут максимальный средний чек для каждой категории товаров, а также значение этого максимального среднего чека.
-SELECT
-    category,
-    order_date AS max_avg_check_date,
-    MAX(average_check) AS max_avg_check_value
-FROM (
-   SELECT
-        category,
-        order_date,
-        revenue,
-        cumulative_revenue,
-        SUM(1) OVER (PARTITION BY category ORDER BY order_date) AS cumulative_orders
-    FROM sales
-) AS subquery
-GROUP BY category
+SELECT 
+    category, 
+    max_avg_check_date, 
+    max(average_check) AS max_average_check
+FROM 
+    (SELECT 
+        category, 
+        order_date, 
+        order_date AS max_avg_check_date, 
+        cumulative_revenue / cumulative_orders AS average_check 
+    FROM 
+        (SELECT 
+            category, 
+            order_date, 
+            sum(revenue) AS cumulative_revenue, 
+            sum(1) AS cumulative_orders 
+        FROM sales 
+        GROUP BY category, order_date 
+        ORDER BY category, order_date)
+    )
+GROUP BY category;
