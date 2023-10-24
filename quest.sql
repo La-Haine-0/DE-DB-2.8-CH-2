@@ -22,7 +22,7 @@ ORDER BY category, order_date;
 
 --Расчет среднего чека:
 --Для каждой категории товаров на каждый день вычислите средний чек, который равен кумулятивной выручке на этот день, поделенной на кумулятивное количество заказов на этот день.
-SELECT
+SELECT 
     category,
     order_date,
     cumulative_revenue / cumulative_orders AS average_check
